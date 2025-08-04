@@ -1,519 +1,160 @@
-# More Fans Platform API
+More Fans Platform API
+Overview
+More Fans is a competitive platform where real-world teams, like Project COBRA, compete to complete objectives while building fan engagement. Fans can follow teams, tip them with virtual currency, and track active objectives. The platform is designed to foster interaction between teams and their supporters in a gamified ecosystem.
+Key Features
 
-## Overview
+Team Interaction: Fans can follow/unfollow teams and tip them with virtual currency.
+Objective Tracking: View and create objectives for teams to complete.
+Simple Storage: Uses AWS S3 for persistent storage with JSON files.
+Real-time Updates: Basic polling-based frontend for team and objective updates.
 
-More Fans is a competitive platform where real-world teams compete to complete objectives while building fan engagement. Companies sponsor teams, fans follow and support their favorites, and everyone participates in a gamified ecosystem of real achievements.
+Architecture
+┌───────────────────────────────┐
+│         More Fans API         │
+├───────────────────────────────┤
+│ • Flask-based REST API        │
+│ • AWS S3 Storage             │
+│ • Frontend (HTML/JS/CSS)     │
+│ • No Authentication (Demo)   │
+└───────────────────────────────┘
 
-### Key Features
+API Endpoints
+Users
+GET    /api/users/fan           # Get fan user details
 
-- **Multi-layered Validation**: Combines manual review, automated verification, and community consensus
-- **Real-time Engagement**: Live updates, predictions, and interactive fan experiences
-- **Flexible Monetization**: Virtual currency, sponsorships, and premium subscriptions
-- **Social Ecosystem**: Following, commenting, sharing, and team interactions
+Teams
+GET    /api/teams               # List all teams
+GET    /api/teams/:teamId      # Get specific team details
+POST   /api/teams/:teamId/follow  # Follow a team
+DELETE /api/teams/:teamId/follow  # Unfollow a team
+POST   /api/teams/:teamId/tip    # Tip a team with virtual currency
 
-## Architecture
+Objectives
+GET    /api/objectives          # List active objectives
+POST   /api/objectives          # Create new objective
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        More Fans API                         │
-├─────────────────┬───────────────────┬───────────────────────┤
-│   Core Services │  Real-time Layer  │  Integration Layer    │
-├─────────────────┼───────────────────┼───────────────────────┤
-│ • Auth/Users    │ • WebSocket Server │ • External APIs       │
-│ • Teams         │ • Event Streaming  │ • IoT Devices         │
-│ • Objectives    │ • Live Updates     │ • Payment Processing  │
-│ • Validation    │ • Chat/Comments    │ • Media Storage       │
-│ • Scoring       │ • Notifications    │ • Analytics           │
-└─────────────────┴───────────────────┴───────────────────────┘
-```
+Wallet
+GET    /api/wallet/balance      # Get user's wallet balance
 
-## API Endpoints
+Health Check
+GET    /health                  # Check API status
 
-### Authentication & Users
-
-```http
-POST   /api/v1/auth/register
-POST   /api/v1/auth/login
-POST   /api/v1/auth/refresh
-POST   /api/v1/auth/logout
-GET    /api/v1/users/profile
-PUT    /api/v1/users/profile
-POST   /api/v1/users/upgrade-subscription
-```
-
-### Teams & Sponsors
-
-```http
-GET    /api/v1/teams
-GET    /api/v1/teams/:teamId
-POST   /api/v1/teams                    # Admin only
-PUT    /api/v1/teams/:teamId           # Team admin only
-POST   /api/v1/teams/:teamId/members   # Team admin only
-DELETE /api/v1/teams/:teamId/members/:userId
-
-GET    /api/v1/sponsors
-POST   /api/v1/sponsors/:sponsorId/teams/:teamId  # Sponsorship request
-PUT    /api/v1/sponsors/:sponsorId/teams/:teamId  # Update sponsorship
-```
-
-### Objectives & Submissions
-
-```http
-GET    /api/v1/objectives               # List active objectives
-GET    /api/v1/objectives/:objectiveId
-POST   /api/v1/objectives               # Admin only
-PUT    /api/v1/objectives/:objectiveId  # Admin only
-
-POST   /api/v1/objectives/:objectiveId/submissions
-GET    /api/v1/submissions/:submissionId
-PUT    /api/v1/submissions/:submissionId        # Add evidence
-POST   /api/v1/submissions/:submissionId/review # Admin review
-```
-
-### Validation System
-
-```http
-# Admin Manual Review
-POST   /api/v1/validation/admin/review
-GET    /api/v1/validation/admin/pending
-
-# Automated Validation
-POST   /api/v1/validation/auto/configure
-POST   /api/v1/validation/auto/webhook/:objectiveId
-GET    /api/v1/validation/auto/status/:submissionId
-
-# Community Verification
-POST   /api/v1/validation/community/vote
-GET    /api/v1/validation/community/pending
-GET    /api/v1/validation/community/results/:submissionId
-```
-
-### Fan Engagement
-
-```http
-# Following/Social
-POST   /api/v1/social/follow/teams/:teamId
-DELETE /api/v1/social/follow/teams/:teamId
-GET    /api/v1/social/following
-POST   /api/v1/social/share
-POST   /api/v1/social/comments
-PUT    /api/v1/social/comments/:commentId
-DELETE /api/v1/social/comments/:commentId
-
-# Predictions & Voting
-GET    /api/v1/predictions/active
-POST   /api/v1/predictions/:predictionId/vote
-GET    /api/v1/predictions/:predictionId/results
-
-# Virtual Currency
-GET    /api/v1/wallet/balance
-POST   /api/v1/wallet/purchase
-POST   /api/v1/wallet/transfer
-GET    /api/v1/wallet/transactions
-POST   /api/v1/wallet/tip/teams/:teamId
-```
-
-### Live Features
-
-```http
-GET    /api/v1/live/streams
-GET    /api/v1/live/streams/:streamId
-POST   /api/v1/live/streams             # Team only
-DELETE /api/v1/live/streams/:streamId   # Team only
-
-# WebSocket endpoints
-WS     /ws/live/updates
-WS     /ws/live/chat/:teamId
-WS     /ws/live/notifications
-```
-
-## Data Models
-
-### User
-```json
+Data Models
+User
 {
   "userId": "uuid",
   "username": "string",
   "email": "string",
-  "role": "fan|viewer|team_member|sponsor|admin",
-  "subscriptionTier": "free|premium|vip",
-  "walletBalance": 0,
+  "role": "fan|sponsor",
+  "walletBalance": 1000,
   "followingTeams": ["teamId"],
-  "achievements": ["achievementId"],
   "createdAt": "timestamp"
 }
-```
 
-### Team
-```json
+Team
 {
   "teamId": "uuid",
   "name": "Project COBRA",
   "slug": "project-cobra",
   "description": "string",
-  "members": [
-    {
-      "userId": "uuid",
-      "role": "leader|member",
-      "joinedAt": "timestamp"
-    }
-  ],
-  "sponsors": ["sponsorId"],
+  "members": [],
+  "sponsors": [],
   "metrics": {
     "totalObjectivesCompleted": 0,
-    "successRate": 0.95,
-    "fanCount": 0,
+    "successRate": 0,
     "totalEarnings": 0
   },
-  "verified": true
+  "verified": true,
+  "createdAt": "timestamp"
 }
-```
 
-### Objective
-```json
+Objective
 {
   "objectiveId": "uuid",
   "title": "string",
   "description": "string",
-  "category": "delivery|security|development|research",
-  "validationType": {
-    "manual": true,
-    "automated": {
-      "enabled": true,
-      "endpoint": "https://api.example.com/verify",
-      "requiredData": ["gpsLocation", "timestamp", "photo"]
-    },
-    "community": {
-      "enabled": true,
-      "minVotes": 100,
-      "approvalThreshold": 0.7
-    }
-  },
+  "category": "general|development",
   "rewards": {
     "points": 1000,
-    "currency": 500,
-    "achievements": ["achievementId"]
+    "currency": 500
   },
   "deadline": "timestamp",
-  "status": "active|completed|expired"
-}
-```
-
-### Submission
-```json
-{
-  "submissionId": "uuid",
-  "objectiveId": "uuid",
-  "teamId": "uuid",
-  "evidence": {
-    "description": "string",
-    "photos": ["url"],
-    "videos": ["url"],
-    "data": {
-      "gpsLocation": {"lat": 0, "lng": 0},
-      "timestamp": "timestamp",
-      "customFields": {}
-    }
-  },
-  "validation": {
-    "status": "pending|reviewing|approved|rejected",
-    "adminReview": {
-      "reviewerId": "uuid",
-      "decision": "approved|rejected",
-      "notes": "string",
-      "timestamp": "timestamp"
-    },
-    "automatedCheck": {
-      "status": "pending|passed|failed",
-      "results": {},
-      "timestamp": "timestamp"
-    },
-    "communityVotes": {
-      "approve": 150,
-      "reject": 20,
-      "status": "voting|approved|rejected"
-    }
-  },
-  "submittedAt": "timestamp"
-}
-```
-
-## WebSocket Events
-
-### Client → Server
-```javascript
-// Subscribe to updates
-{
-  "type": "subscribe",
-  "channels": ["team:project-cobra", "objective:uuid", "global"]
+  "status": "active",
+  "createdAt": "timestamp"
 }
 
-// Send chat message
-{
-  "type": "chat",
-  "teamId": "uuid",
-  "message": "Go COBRA! 🐍"
-}
-
-// Live reaction
-{
-  "type": "reaction",
-  "targetType": "submission|stream|team",
-  "targetId": "uuid",
-  "reaction": "🎉"
-}
-```
-
-### Server → Client
-```javascript
-// New submission
-{
-  "type": "submission.new",
-  "data": { /* submission object */ }
-}
-
-// Validation update
-{
-  "type": "validation.update",
-  "data": {
-    "submissionId": "uuid",
-    "validationType": "admin|automated|community",
-    "status": "approved|rejected",
-    "details": {}
-  }
-}
-
-// Live stream started
-{
-  "type": "stream.started",
-  "data": {
-    "streamId": "uuid",
-    "teamId": "uuid",
-    "title": "Working on Privacy Shield v2.0",
-    "url": "rtmp://..."
-  }
-}
-
-// Real-time metrics
-{
-  "type": "metrics.update",
-  "data": {
-    "teamId": "uuid",
-    "metric": "fanCount|points|rank",
-    "value": 1234,
-    "change": +5
-  }
-}
-```
-
-## Authentication
-
-### JWT Token Structure
-```json
-{
-  "userId": "uuid",
-  "role": "fan|viewer|team_member|sponsor|admin",
-  "teamId": "uuid|null",
-  "subscriptionTier": "free|premium|vip",
-  "permissions": ["read", "write", "validate"],
-  "exp": 1234567890
-}
-```
-
-### Request Headers
-```http
-Authorization: Bearer <jwt_token>
-X-API-Key: <api_key>  # For external integrations
-Content-Type: application/json
-```
-
-## Integration Examples
-
-### External API Validation
-```javascript
-// Webhook endpoint for automated validation
-app.post('/api/v1/validation/auto/webhook/:objectiveId', async (req, res) => {
-  const { objectiveId } = req.params;
-  const { submissionId, data } = req.body;
-  
-  // Verify webhook signature
-  if (!verifyWebhookSignature(req)) {
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
-  
-  // Process validation result
-  await updateSubmissionValidation(submissionId, {
-    type: 'automated',
-    status: data.verified ? 'passed' : 'failed',
-    results: data
-  });
-  
-  // Trigger real-time update
-  wsServer.broadcast('validation.update', {
-    submissionId,
-    validationType: 'automated',
-    status: data.verified ? 'approved' : 'rejected'
-  });
-  
-  res.json({ success: true });
-});
-```
-
-### IoT Device Integration
-```javascript
-// Example: GPS tracker validation for delivery objective
-const validateDeliveryLocation = async (submission) => {
-  const { gpsLocation, timestamp } = submission.evidence.data;
-  const objective = await getObjective(submission.objectiveId);
-  
-  // Check if GPS coordinates match target location
-  const distance = calculateDistance(
-    gpsLocation,
-    objective.targetLocation
-  );
-  
-  // Verify timing
-  const timeDiff = new Date(timestamp) - new Date(objective.startTime);
-  
-  return {
-    verified: distance < 100 && timeDiff > 0, // Within 100 meters
-    details: {
-      distance,
-      timestamp,
-      withinRange: distance < 100
-    }
-  };
-};
-```
-
-### Community Voting Flow
-```javascript
-// Submit community vote
-app.post('/api/v1/validation/community/vote', requireAuth, async (req, res) => {
-  const { submissionId, vote } = req.body;
-  const userId = req.user.userId;
-  
-  // Check if user has already voted
-  const existingVote = await getVote(submissionId, userId);
-  if (existingVote) {
-    return res.status(400).json({ error: 'Already voted' });
-  }
-  
-  // Record vote
-  await recordVote(submissionId, userId, vote);
-  
-  // Check if threshold reached
-  const results = await getVoteResults(submissionId);
-  if (results.totalVotes >= MIN_VOTES) {
-    const approvalRate = results.approve / results.totalVotes;
-    if (approvalRate >= APPROVAL_THRESHOLD) {
-      await updateSubmissionStatus(submissionId, 'approved');
-    }
-  }
-  
-  res.json({ success: true, results });
-});
-```
-
-## Getting Started
-
-### Installation
-```bash
+Getting Started
+Installation
 # Clone the repository
 git clone https://github.com/more-fans/api.git
 
 # Install dependencies
 cd api
-npm install
+pip install flask flask-cors boto3
 
 # Set up environment variables
 cp .env.example .env
 
-# Run database migrations
-npm run migrate
+# Start the server
+python api_server.py
 
-# Start development server
-npm run dev
-```
-
-### Environment Variables
-```env
+Environment Variables
 # Server
-PORT=3000
-NODE_ENV=development
+PORT=5000
+SECRET_KEY=dev-secret-change-in-production
 
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/morefans
-
-# Authentication
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
-
-# Redis (for real-time features)
-REDIS_URL=redis://localhost:6379
-
-# External Services
+# AWS S3
+S3_BUCKET=mithrilmedia
+AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=xxx
 AWS_SECRET_ACCESS_KEY=xxx
-S3_BUCKET=morefans-media
 
-# Streaming
-RTMP_SERVER_URL=rtmp://stream.morefans.com/live
+Running Tests
+# Run API tests
+python test_api.py
 
-# Payment Processing
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
+Frontend
+The frontend is a single HTML page (index.html) with JavaScript and CSS for:
 
-# External Validation APIs
-VALIDATION_API_KEY=xxx
-IOT_PLATFORM_KEY=xxx
-```
+Displaying teams with follow/unfollow and tip functionality
+Listing active objectives
+Showing wallet balance
+Polling for updates every 30 seconds
 
-### Basic Usage Example
-```javascript
-import MoreFansSDK from '@morefans/sdk';
+Serve it with any static file server or open directly in a browser after starting the API server.
+Usage Example
+// Example API calls using fetch
+async function main() {
+  // Get all teams
+  const teams = await fetch('http://localhost:5000/api/teams').then(res => res.json());
 
-const sdk = new MoreFansSDK({
-  apiKey: 'your-api-key',
-  environment: 'production'
-});
+  // Follow a team
+  await fetch(`http://localhost:5000/api/teams/${teams[0].teamId}/follow?user_id=fan-user-123`, {
+    method: 'POST'
+  });
 
-// Authenticate
-const { token } = await sdk.auth.login({
-  email: 'fan@example.com',
-  password: 'secure-password'
-});
+  // Tip a team
+  await fetch(`http://localhost:5000/api/teams/${teams[0].teamId}/tip?user_id=fan-user-123`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: 100 })
+  });
 
-// Follow a team
-await sdk.teams.follow('project-cobra');
+  // Get wallet balance
+  const balance = await fetch('http://localhost:5000/api/wallet/balance?user_id=fan-user-123')
+    .then(res => res.json());
+  console.log('Balance:', balance.balance);
+}
 
-// Make a prediction
-await sdk.predictions.vote('prediction-123', {
-  choice: 'team-cobra-wins',
-  wager: 100 // Virtual currency
-});
+Rate Limits
 
-// Watch for real-time updates
-sdk.realtime.subscribe(['team:project-cobra'], (event) => {
-  console.log('New event:', event);
-});
-```
+No rate limits implemented in this demo version
+All users have equal access to API endpoints
 
-## Rate Limits
+Support
 
-| Tier | Requests/Hour | WebSocket Connections | Stream Quality |
-|------|--------------|---------------------|----------------|
-| Free | 100 | 1 | 720p |
-| Premium | 1000 | 5 | 1080p |
-| VIP | 10000 | Unlimited | 4K |
+Contact: support@morefans.com
+Project COBRA: https://robotservicesauction.com/cobra
 
-## Support
-
-- Documentation: https://docs.morefans.com
-- API Status: https://status.morefans.com
-- Support: support@morefans.com
-- Discord: https://discord.gg/morefans
-
-## License
-
+License
 MIT License - see LICENSE.md for details
