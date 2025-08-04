@@ -1,14 +1,21 @@
-More Fans Platform API
-Overview
+
+
+# More Fans Platform API
+
+## Overview
+
 More Fans is a competitive platform where real-world teams, like Project COBRA, compete to complete objectives while building fan engagement. Fans can follow teams, tip them with virtual currency, and track active objectives. The platform is designed to foster interaction between teams and their supporters in a gamified ecosystem.
-Key Features
 
-Team Interaction: Fans can follow/unfollow teams and tip them with virtual currency.
-Objective Tracking: View and create objectives for teams to complete.
-Simple Storage: Uses AWS S3 for persistent storage with JSON files.
-Real-time Updates: Basic polling-based frontend for team and objective updates.
+### Key Features
 
-Architecture
+- **Team Interaction**: Fans can follow/unfollow teams and tip them with virtual currency.
+- **Objective Tracking**: View and create objectives for teams to complete.
+- **Simple Storage**: Uses AWS S3 for persistent storage with JSON files.
+- **Real-time Updates**: Basic polling-based frontend for team and objective updates.
+
+## Architecture
+
+```
 ┌───────────────────────────────┐
 │         More Fans API         │
 ├───────────────────────────────┤
@@ -17,30 +24,44 @@ Architecture
 │ • Frontend (HTML/JS/CSS)     │
 │ • No Authentication (Demo)   │
 └───────────────────────────────┘
+```
 
-API Endpoints
-Users
+## API Endpoints
+
+### Users
+```http
 GET    /api/users/fan           # Get fan user details
+```
 
-Teams
+### Teams
+```http
 GET    /api/teams               # List all teams
 GET    /api/teams/:teamId      # Get specific team details
 POST   /api/teams/:teamId/follow  # Follow a team
 DELETE /api/teams/:teamId/follow  # Unfollow a team
 POST   /api/teams/:teamId/tip    # Tip a team with virtual currency
+```
 
-Objectives
+### Objectives
+```http
 GET    /api/objectives          # List active objectives
 POST   /api/objectives          # Create new objective
+```
 
-Wallet
+### Wallet
+```http
 GET    /api/wallet/balance      # Get user's wallet balance
+```
 
-Health Check
+### Health Check
+```http
 GET    /health                  # Check API status
+```
 
-Data Models
-User
+## Data Models
+
+### User
+```json
 {
   "userId": "uuid",
   "username": "string",
@@ -50,8 +71,10 @@ User
   "followingTeams": ["teamId"],
   "createdAt": "timestamp"
 }
+```
 
-Team
+### Team
+```json
 {
   "teamId": "uuid",
   "name": "Project COBRA",
@@ -67,8 +90,10 @@ Team
   "verified": true,
   "createdAt": "timestamp"
 }
+```
 
-Objective
+### Objective
+```json
 {
   "objectiveId": "uuid",
   "title": "string",
@@ -82,9 +107,12 @@ Objective
   "status": "active",
   "createdAt": "timestamp"
 }
+```
 
-Getting Started
-Installation
+## Getting Started
+
+### Installation
+```bash
 # Clone the repository
 git clone https://github.com/more-fans/api.git
 
@@ -97,8 +125,10 @@ cp .env.example .env
 
 # Start the server
 python api_server.py
+```
 
-Environment Variables
+### Environment Variables
+```env
 # Server
 PORT=5000
 SECRET_KEY=dev-secret-change-in-production
@@ -108,21 +138,25 @@ S3_BUCKET=mithrilmedia
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=xxx
 AWS_SECRET_ACCESS_KEY=xxx
+```
 
-Running Tests
+### Running Tests
+```bash
 # Run API tests
 python test_api.py
+```
 
-Frontend
-The frontend is a single HTML page (index.html) with JavaScript and CSS for:
-
-Displaying teams with follow/unfollow and tip functionality
-Listing active objectives
-Showing wallet balance
-Polling for updates every 30 seconds
+### Frontend
+The frontend is a single HTML page (`index.html`) with JavaScript and CSS for:
+- Displaying teams with follow/unfollow and tip functionality
+- Listing active objectives
+- Showing wallet balance
+- Polling for updates every 30 seconds
 
 Serve it with any static file server or open directly in a browser after starting the API server.
-Usage Example
+
+## Usage Example
+```javascript
 // Example API calls using fetch
 async function main() {
   // Get all teams
@@ -145,16 +179,16 @@ async function main() {
     .then(res => res.json());
   console.log('Balance:', balance.balance);
 }
+```
 
-Rate Limits
+## Rate Limits
+- No rate limits implemented in this demo version
+- All users have equal access to API endpoints
 
-No rate limits implemented in this demo version
-All users have equal access to API endpoints
+## Support
+- Contact: support@morefans.com
+- Project COBRA: https://robotservicesauction.com/cobra
 
-Support
-
-Contact: support@morefans.com
-Project COBRA: https://robotservicesauction.com/cobra
-
-License
+## License
 MIT License - see LICENSE.md for details
+
